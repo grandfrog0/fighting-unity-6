@@ -9,11 +9,9 @@ using UnityEngine.Windows.Speech;
 public class PlayerController : NetworkBehaviour
 {
     [SerializeField] float walkSpeed = 5f;
-    [SerializeField] float runSpeed = 5f;
     [SerializeField] float mouseSensitivity = 2f;
     [SerializeField] Vector3 _camOffset;
 
-    private InputSystem_Actions _actions;
     private Rigidbody _rigidbody;
     private Camera _cam;
     private Animator _animator;
@@ -22,7 +20,6 @@ public class PlayerController : NetworkBehaviour
     private float _hAxis;
     private float _xRot;
 
-    private bool _isRunning;
     private bool _isCrouching;
 
     private void Start()
@@ -37,7 +34,6 @@ public class PlayerController : NetworkBehaviour
 
     private void Awake()
     {
-        _actions = new InputSystem_Actions();
         _rigidbody = GetComponent<Rigidbody>();
         _animator = GetComponentInChildren<Animator>();
     }
@@ -55,14 +51,15 @@ public class PlayerController : NetworkBehaviour
     {
         _hAxis = Input.GetAxis("Horizontal");
         _vAxis = Input.GetAxis("Vertical");
-        Vector3 move = (transform.right * _hAxis + transform.forward * _vAxis) * (_isRunning ? 2 : 1);
-        _rigidbody.linearVelocity = move * runSpeed * Time.deltaTime;
+
+        Vector3 move = (transform.right * _hAxis + transform.forward * _vAxis).normalized * 100;
+        _rigidbody.linearVelocity = move * walkSpeed * Time.deltaTime;
 
         bool isJumping = Input.GetKeyDown(KeyCode.Z);
         bool isRolling = Input.GetKeyDown(KeyCode.X);
 
-        float axis = (_isRunning ? 2 : 1) * _vAxis != 0 ? Mathf.Sign(_vAxis) : _hAxis != 0 ? 1 : 0;
-        _isCrouching = !_isRunning && Input.GetKey(KeyCode.LeftControl);
+        float axis = _vAxis != 0 ? Mathf.Sign(_vAxis) : _hAxis != 0 ? -1 : 0;
+        _isCrouching = axis == 0 && Input.GetKey(KeyCode.LeftControl);
 
         SetIntegerServerRpc("Axis", (int)axis);
         SetBooleanServerRpc("IsCrouching", _isCrouching);
@@ -94,7 +91,7 @@ public class PlayerController : NetworkBehaviour
     {
         if (Input.GetKeyDown(KeyCode.E))
         {
-            _animator.SetTrigger("OnPunch");
+            SetTriggerServerRpc("OnPunch");
         }
     }
 
@@ -107,30 +104,12 @@ public class PlayerController : NetworkBehaviour
         _xRot = Mathf.Clamp(_xRot, -80f, 80f);
 
         _cam.transform.localRotation = Quaternion.Euler(_xRot, 0, 0);
-        _cam.transform.position = _cam.transform.localRotation * _camOffset;
         transform.Rotate(Vector3.up * mouseX);
+        _cam.transform.localPosition = transform.rotation * _camOffset;
     }
-
     public override void OnNetworkDespawn()
     {
         Debug.Log("Despawning...");
-        _cam.transform.parent = null;
         base.OnNetworkDespawn();
     }
-
-    private void OnEnable()
-    {
-        _actions.Enable();
-        _actions.Player.Sprint.started += OnSprintStarted;
-        _actions.Player.Sprint.canceled += OnSprintCanceled;
-    }
-    private void OnDisable()
-    {
-        _actions.Disable();
-        _actions.Player.Sprint.started -= OnSprintStarted;
-        _actions.Player.Sprint.canceled -= OnSprintCanceled;
-    }
-
-    private void OnSprintStarted(InputAction.CallbackContext _) => _isRunning = true;
-    private void OnSprintCanceled(InputAction.CallbackContext _) => _isRunning = false;
 }
