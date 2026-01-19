@@ -104,7 +104,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 16565754
+  GlobalObjectIdHash: 1566817566
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -133,6 +133,7 @@ MonoBehaviour:
   walkSpeed: 5
   runSpeed: 8
   mouseSensitivity: 2
+  _camOffset: {x: 0, y: 1, z: -5}
 --- !u!54 &1381963997419860174
 Rigidbody:
   m_ObjectHideFlags: 0

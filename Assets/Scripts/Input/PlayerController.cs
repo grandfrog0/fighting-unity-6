@@ -3,6 +3,7 @@ using System.Globalization;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Windows.Speech;
 
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerController : NetworkBehaviour
@@ -10,6 +11,7 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] float walkSpeed = 5f;
     [SerializeField] float runSpeed = 5f;
     [SerializeField] float mouseSensitivity = 2f;
+    [SerializeField] Vector3 _camOffset;
 
     private InputSystem_Actions _actions;
     private Rigidbody _rigidbody;
@@ -25,18 +27,19 @@ public class PlayerController : NetworkBehaviour
 
     private void Start()
     {
-        _actions = new InputSystem_Actions();
-        _actions.Enable();
-
-        _rigidbody = GetComponent<Rigidbody>();
-        _animator = GetComponentInChildren<Animator>();
-
         if (IsOwner)
         {
             _cam = Camera.main;
             _cam.transform.SetParent(transform);
-            _cam.transform.localPosition = new Vector3(0, 1.6f, 0);
+            _cam.transform.localPosition = _camOffset;
         }
+    }
+
+    private void Awake()
+    {
+        _actions = new InputSystem_Actions();
+        _rigidbody = GetComponent<Rigidbody>();
+        _animator = GetComponentInChildren<Animator>();
     }
 
     private void Update()
@@ -59,14 +62,33 @@ public class PlayerController : NetworkBehaviour
         bool isRolling = Input.GetKeyDown(KeyCode.X);
 
         float axis = (_isRunning ? 2 : 1) * _vAxis != 0 ? Mathf.Sign(_vAxis) : _hAxis != 0 ? 1 : 0;
-        _isCrouching = !_isRunning && Input.GetKeyDown(KeyCode.LeftControl);
+        _isCrouching = !_isRunning && Input.GetKey(KeyCode.LeftControl);
 
-        _animator.SetInteger("Axis", (int)axis);
-        _animator.SetBool("IsCrouching", _isCrouching);
+        SetIntegerServerRpc("Axis", (int)axis);
+        SetBooleanServerRpc("IsCrouching", _isCrouching);
 
-        if (isJumping) _animator.SetTrigger("OnJumpForward");
-        else if (isRolling) _animator.SetTrigger("OnRollForward");
+        if (isJumping) SetTriggerServerRpc("OnJumpForward");
+        else if (isRolling) SetTriggerServerRpc("OnRollForward");
     }
+
+    [ServerRpc]
+    private void SetIntegerServerRpc(string key, int value)
+        => SetIntegerClientRpc(key, value);
+    [ServerRpc]
+    private void SetBooleanServerRpc(string key, bool value)
+        => SetBooleanClientRpc(key, value);
+    [ServerRpc]
+    private void SetTriggerServerRpc(string key)
+        => SetTriggerClientRpc(key);
+    [ClientRpc]
+    private void SetIntegerClientRpc(string key, int value)
+        => _animator.SetInteger(key, value);
+    [ClientRpc]
+    private void SetBooleanClientRpc(string key, bool value)
+        => _animator.SetBool(key, value);
+    [ClientRpc]
+    private void SetTriggerClientRpc(string key)
+        => _animator.SetTrigger(key);
 
     private void HandleAttack()
     {
@@ -85,6 +107,7 @@ public class PlayerController : NetworkBehaviour
         _xRot = Mathf.Clamp(_xRot, -80f, 80f);
 
         _cam.transform.localRotation = Quaternion.Euler(_xRot, 0, 0);
+        _cam.transform.position = _cam.transform.localRotation * _camOffset;
         transform.Rotate(Vector3.up * mouseX);
     }
 
@@ -97,11 +120,13 @@ public class PlayerController : NetworkBehaviour
 
     private void OnEnable()
     {
+        _actions.Enable();
         _actions.Player.Sprint.started += OnSprintStarted;
         _actions.Player.Sprint.canceled += OnSprintCanceled;
     }
     private void OnDisable()
     {
+        _actions.Disable();
         _actions.Player.Sprint.started -= OnSprintStarted;
         _actions.Player.Sprint.canceled -= OnSprintCanceled;
     }
