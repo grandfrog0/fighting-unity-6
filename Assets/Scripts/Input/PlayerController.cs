@@ -26,6 +26,8 @@ public class PlayerController : NetworkBehaviour
     private bool _isCrouching;
     private bool _isRunning;
 
+    public bool isAlive = true;
+
     private void Start()
     {
         if (IsOwner)
@@ -44,7 +46,7 @@ public class PlayerController : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsOwner) return;
+        if (!IsOwner || !isAlive) return;
 
         HandleAttack();
         HandleMove();
@@ -107,7 +109,7 @@ public class PlayerController : NetworkBehaviour
         _canMove = false;
         _rigidbody.linearVelocity = Vector3.zero;
         _rigidbody.AddForce(transform.forward * jumpPower * 1.5f, ForceMode.Impulse);
-        SetTriggerServerRpc("OnRollForward");
+        SetTriggerClientRpc("OnRollForward");
         yield return new WaitForSeconds(0.25f);
         _canMove = true;
     }

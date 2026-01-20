@@ -6,28 +6,33 @@ public class Entity : NetworkBehaviour
 {
     public float currentHealth;
     public float maxHealth = 100;
+    private bool _isDead = false;
 
     public void TakeDamage(float value)
     {
         currentHealth -= value;
         Debug.Log(currentHealth);
 
-        if (currentHealth <= 0)
+        if (currentHealth <= 0 && !_isDead)
         {
+            _isDead = true;
             currentHealth = 0;
-            GetComponent<PlayerController>().SetAnimationBoolean("IsDead", true);
+            if (IsOwner)
+            {
+                PlayerController controller = GetComponent<PlayerController>();
+                controller.isAlive = false;
+                controller.SetAnimationBoolean("IsDead", true);
+            }
         }
     }
 
     public void OnTriggerEnter(Collider other)
     {
-        if (!IsOwner) return;
-
         if (other.TryGetComponent(out Entity e))
             e.TakeDamage(20);
     }
 
-    private void Start()
+    private void Awake()
     {
         currentHealth = maxHealth;
     }
