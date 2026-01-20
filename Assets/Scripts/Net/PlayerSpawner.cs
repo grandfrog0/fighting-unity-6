@@ -22,7 +22,7 @@ public class PlayerSpawner : NetworkBehaviour
 
     public override void OnDestroy()
     {
-        if (IsServer)
+        if (IsServer && NetworkManager.Singleton)
         {
             NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
         }

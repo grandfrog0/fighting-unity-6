@@ -15,6 +15,7 @@ public class Entity : NetworkBehaviour
 
         if (currentHealth <= 0 && !_isDead)
         {
+            Debug.Log(IsOwner);
             _isDead = true;
             currentHealth = 0;
             if (IsOwner)
@@ -22,6 +23,7 @@ public class Entity : NetworkBehaviour
                 PlayerController controller = GetComponent<PlayerController>();
                 controller.isAlive = false;
                 controller.SetAnimationBoolean("IsDead", true);
+                Camera.main.GetComponent<ObservableCamera>().Target = null;
             }
         }
     }
