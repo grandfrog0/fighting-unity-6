@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Globalization;
 using Unity.Netcode;
 using UnityEngine;
@@ -9,6 +10,7 @@ using UnityEngine.Windows.Speech;
 public class PlayerController : NetworkBehaviour
 {
     [SerializeField] float walkSpeed = 5f;
+    [SerializeField] float jumpPower = 5f;
     [SerializeField] float mouseSensitivity = 2f;
     [SerializeField] Vector3 _camOffset;
 
@@ -19,8 +21,10 @@ public class PlayerController : NetworkBehaviour
     private float _vAxis;
     private float _hAxis;
     private float _xRot;
+    private bool _canMove = true;
 
     private bool _isCrouching;
+    private bool _isRunning;
 
     private void Start()
     {
@@ -42,40 +46,45 @@ public class PlayerController : NetworkBehaviour
     {
         if (!IsOwner) return;
 
-        HandleMove();
         HandleAttack();
+        HandleMove();
         HandleLook();
     }
 
     private void HandleMove()
     {
-        _hAxis = Input.GetAxis("Horizontal");
-        _vAxis = Input.GetAxis("Vertical");
+        if (_canMove)
+        {
+            _hAxis = Input.GetAxis("Horizontal");
+            _vAxis = Input.GetAxis("Vertical");
+            _isRunning = Input.GetKey(KeyCode.LeftShift) && _vAxis == 1;
+            _isCrouching = !_isRunning && Input.GetKey(KeyCode.LeftControl);
 
-        Vector3 move = (transform.right * _hAxis + transform.forward * _vAxis).normalized * 100;
-        _rigidbody.linearVelocity = move * walkSpeed * Time.deltaTime;
+            Vector3 move = (_isRunning ? 2 : _isCrouching ? 0.5f : 1) * (transform.right * _hAxis + transform.forward * _vAxis).normalized * 50;
+            _rigidbody.linearVelocity = move * walkSpeed * Time.deltaTime;
 
-        bool isJumping = Input.GetKeyDown(KeyCode.Z);
-        bool isRolling = Input.GetKeyDown(KeyCode.X);
+            float axis = (_isRunning ? 2 : 1) * (_vAxis != 0 ? Mathf.Sign(_vAxis) : _hAxis != 0 ? -1 : 0);
 
-        float axis = _vAxis != 0 ? Mathf.Sign(_vAxis) : _hAxis != 0 ? -1 : 0;
-        _isCrouching = axis == 0 && Input.GetKey(KeyCode.LeftControl);
+            SetIntegerServerRpc("Axis", (int)axis);
+            SetBooleanServerRpc("IsCrouching", _isCrouching);
 
-        SetIntegerServerRpc("Axis", (int)axis);
-        SetBooleanServerRpc("IsCrouching", _isCrouching);
-
-        if (isJumping) SetTriggerServerRpc("OnJumpForward");
-        else if (isRolling) SetTriggerServerRpc("OnRollForward");
+            bool isRolling = Input.GetKeyDown(KeyCode.X);
+            if (isRolling) RollForwardServerRpc();
+        }
     }
 
+    public void SetAnimationBoolean(string key, bool value)
+    {
+        SetBooleanServerRpc(key, value);
+    }
     [ServerRpc]
-    private void SetIntegerServerRpc(string key, int value)
+    public void SetIntegerServerRpc(string key, int value)
         => SetIntegerClientRpc(key, value);
     [ServerRpc]
-    private void SetBooleanServerRpc(string key, bool value)
+    public void SetBooleanServerRpc(string key, bool value)
         => SetBooleanClientRpc(key, value);
     [ServerRpc]
-    private void SetTriggerServerRpc(string key)
+    public void SetTriggerServerRpc(string key)
         => SetTriggerClientRpc(key);
     [ClientRpc]
     private void SetIntegerClientRpc(string key, int value)
@@ -86,6 +95,22 @@ public class PlayerController : NetworkBehaviour
     [ClientRpc]
     private void SetTriggerClientRpc(string key)
         => _animator.SetTrigger(key);
+
+    [ServerRpc]
+    private void RollForwardServerRpc()
+        => RollForwardClientRpc();
+    [ClientRpc]
+    private void RollForwardClientRpc()
+        => StartCoroutine(RollForwardRoutine());
+    private IEnumerator RollForwardRoutine()
+    {
+        _canMove = false;
+        _rigidbody.linearVelocity = Vector3.zero;
+        _rigidbody.AddForce(transform.forward * jumpPower * 1.5f, ForceMode.Impulse);
+        SetTriggerServerRpc("OnRollForward");
+        yield return new WaitForSeconds(0.25f);
+        _canMove = true;
+    }
 
     private void HandleAttack()
     {
@@ -105,7 +130,7 @@ public class PlayerController : NetworkBehaviour
 
         _cam.transform.localRotation = Quaternion.Euler(_xRot, 0, 0);
         transform.Rotate(Vector3.up * mouseX);
-        _cam.transform.localPosition = transform.rotation * _camOffset;
+        //_cam.transform.localPosition = transform.rotation * _camOffset;
     }
     public override void OnNetworkDespawn()
     {
