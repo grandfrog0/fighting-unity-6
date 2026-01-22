@@ -11,17 +11,16 @@ public class PlayerSelector : MonoBehaviour
 
     private void Start()
     {
-        for(int i = 0; i < players.Count; i++)
+        for (int i = 0; i < players.Count; i++)
         {
-            players[i].onClick.AddListener(() => OnElementClicked(i));
-            Debug.Log(i);
+            int a = i;
+            players[i].onClick.AddListener(() => OnElementClicked(a));
         }
     }
-
-    private void OnElementClicked(int player)
+    private void OnElementClicked(int i)
     {
-        Debug.Log(player);
-        SelectedPlayer = player;
-        selection.position = players[player].transform.position;
+        Debug.Log(i);
+        selection.position = players[i].transform.position;
+        SelectedPlayer = i;
     }
 }

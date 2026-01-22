@@ -8,7 +8,6 @@ using UnityEngine.Experimental.GlobalIllumination;
 
 public class NetworkUI : MonoBehaviour
 {
-    public UnityEvent OnConnected = new();
     public UnityEvent OnStopped = new();
 
     private Coroutine _searchRoutine;
@@ -33,19 +32,18 @@ public class NetworkUI : MonoBehaviour
     {
         NetworkManager.Singleton.StartClient();
 
-        yield return new WaitForSeconds(5f);
+        yield return new WaitForSeconds(1f);
 
         if (!NetworkManager.Singleton.IsConnectedClient)
         {
             Debug.Log("Сервер не найден, запускаю хост...");
             NetworkManager.Singleton.Shutdown();
-            yield return new WaitForSeconds(1f);
+            yield return new WaitForSeconds(0.5f);
             StartHost();
         }
         else
         {
             Debug.Log("Client started!");
-            OnConnected.Invoke();
         }
     }
 
@@ -56,7 +54,6 @@ public class NetworkUI : MonoBehaviour
 
         NetworkManager.Singleton.StartHost();
         Debug.Log("Host started!");
-        OnConnected.Invoke();
     }
 
     public void StartClient()
@@ -66,16 +63,15 @@ public class NetworkUI : MonoBehaviour
 
         NetworkManager.Singleton.StartClient();
         Debug.Log("Client started!");
-        OnConnected.Invoke();
     }
 
     public void Stop()
     {
         if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsClient)
         {
+            OnStopped.Invoke();
             NetworkManager.Singleton.Shutdown();
             Debug.Log("Stopped.");
-            OnStopped.Invoke();
         }
     }
 }
