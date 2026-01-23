@@ -10100,6 +10100,10 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
   playerPrefab: {fileID: 8393858496007220358, guid: a69e6ca14afd0d240affe98b9f4767f6, type: 3}
+  playerModels:
+  - {fileID: 6455689606948112204, guid: b709cafa7c9a64d49982817c78d8655d, type: 3}
+  - {fileID: 5946222463459021931, guid: 42b02bff93c86c64ebb8713840131d8a, type: 3}
+  - {fileID: 8496615031461201344, guid: 0407e74602045a6469739e0740a58341, type: 3}
 --- !u!114 &1656328921
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10140,6 +10144,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
+  playerSpawner: {fileID: 1656328920}
   playerSelector: {fileID: 1672684981}
   talismanSelector: {fileID: 1778457069}
   elixirSelector: {fileID: 2048478602}

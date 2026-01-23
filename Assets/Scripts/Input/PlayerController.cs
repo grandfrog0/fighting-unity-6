@@ -26,7 +26,7 @@ public class PlayerController : NetworkBehaviour
 
     public bool isAlive = true;
 
-    [SerializeField] Transform modelParent;
+    public Transform ModelParent;
     [SerializeField] GameObject punch;
 
     private void Start()
@@ -39,7 +39,7 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    private void Awake()
+    public void Awake()
     {
         _animator = GetComponentInChildren<Animator>();
         _rigidbody = GetComponent<Rigidbody>();
@@ -47,7 +47,7 @@ public class PlayerController : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsOwner || !isAlive || !_canMove) return;
+        if (!IsOwner || !isAlive || !_canMove || !_animator) return;
 
         HandleAttack();
         HandleMove();
@@ -60,8 +60,9 @@ public class PlayerController : NetworkBehaviour
         _isRunning = Input.GetKey(KeyCode.LeftShift) && _vAxis == 1;
         _isCrouching = !_isRunning && Input.GetKey(KeyCode.LeftControl);
 
-        Vector3 move = (_isRunning ? 2 : _isCrouching ? 0.5f : 1) * (transform.right * _hAxis + transform.forward * _vAxis).normalized;
-        _rigidbody.linearVelocity = move * walkSpeed * 100 * Time.fixedDeltaTime;
+        Vector3 move = (_isRunning ? 2 : _isCrouching ? 0.5f : 1) * 
+            (transform.right * _hAxis + transform.forward * _vAxis).normalized * walkSpeed * 100 * Time.fixedDeltaTime;
+        _rigidbody.linearVelocity = new Vector3(move.x, _rigidbody.linearVelocity.y, move.z);
 
         float axis = (_isRunning ? 2 : 1) * (_vAxis != 0 ? Mathf.Sign(_vAxis) : _hAxis != 0 ? -1 : 0);
 

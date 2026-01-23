@@ -12,6 +12,7 @@ public class PlayerSpawner : NetworkBehaviour
     [SerializeField] GameObject playerPrefab;
     private List<ulong> _waitingClients = new();
     private List<GameObject> _spawnedPlayers = new();
+    [SerializeField] List<GameObject> playerModels = new();
 
     public override void OnNetworkSpawn()
     {
@@ -32,14 +33,32 @@ public class PlayerSpawner : NetworkBehaviour
         if (_waitingClients.Count == 2)
         {
             StartGameClientRpc();
-            foreach (ulong id in _waitingClients)
-            {
-                Vector3 pos = new Vector3(Random.Range(-2, 2), 2, Random.Range(-2, 2));
-                GameObject player = Instantiate(playerPrefab, pos, Quaternion.identity);
-                player.GetComponent<NetworkObject>().SpawnAsPlayerObject(id);
-                _spawnedPlayers.Add(player);
-            }
         }
+    }
+
+    public void SetPlayerConfig(PlayerInfo info, ulong id)
+    {
+        LogIsServerClientRpc(id);
+
+        Vector3 pos = new Vector3(Random.Range(-2, 2), 2, Random.Range(-2, 2));
+        GameObject player = Instantiate(playerPrefab, pos, Quaternion.identity);
+        player.GetComponent<NetworkObject>().SpawnAsPlayerObject(id);
+        PlayerController controller = player.GetComponent<PlayerController>();
+
+        Instantiate(
+            playerModels[info.SelectedPlayerIndex],
+            controller.ModelParent
+            );
+
+        controller.Awake();
+
+        _spawnedPlayers.Add(player);
+    }
+
+    [ClientRpc]
+    void LogIsServerClientRpc(ulong id)
+    {
+        Debugger.Log(id, IsServer);
     }
 
     public void StopGame()

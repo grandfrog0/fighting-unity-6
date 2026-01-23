@@ -7,6 +7,7 @@ public class GamePreparer : NetworkBehaviour
 {
     public UnityEvent OnGameReady = new();
 
+    [SerializeField] PlayerSpawner playerSpawner;
     [SerializeField] PlayerSelector playerSelector;
     [SerializeField] ItemSelector talismanSelector, elixirSelector;
     [SerializeField] List<string> itemNames;
@@ -14,28 +15,26 @@ public class GamePreparer : NetworkBehaviour
 
     public void PrepareGame()
     {
-        PrepareGameServerRpc(playerSelector.SelectedPlayer, talismanSelector.SelectedItem.Item.Name, elixirSelector.SelectedItem.Item.Name);
+        PrepareGameServerRpc(
+            playerSelector.SelectedPlayer, talismanSelector.SelectedItem.Item.Name, 
+            elixirSelector.SelectedItem.Item.Name, NetworkManager.Singleton.LocalClientId
+            );
         
         OnGameReady.Invoke();
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void PrepareGameServerRpc(int selectedPlayerIndex, string talismanName, string elixirName)
-    {
-        PrepareGameClientRpc(selectedPlayerIndex, talismanName, elixirName);
-        Debugger.Log(talismanName, IsServer);
-    }
-
-    [ClientRpc]
-    public void PrepareGameClientRpc(int selectedPlayerIndex, string talismanName, string elixirName)
+    public void PrepareGameServerRpc(int selectedPlayerIndex, string talismanName, string elixirName, ulong clientId)
     {
         PlayerInfo playerInfo = new PlayerInfo()
         {
-            SelectedPlayerIndex = playerSelector.SelectedPlayer,
+            SelectedPlayerIndex = selectedPlayerIndex,
             Talisman = items[itemNames.IndexOf(talismanName)],
             Elixir = items[itemNames.IndexOf(elixirName)]
         };
         Debugger.Log(playerInfo, IsServer);
+
+        playerSpawner.SetPlayerConfig(playerInfo, clientId);
     }
 
     public override void OnNetworkSpawn()
