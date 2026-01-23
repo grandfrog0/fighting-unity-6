@@ -15,6 +15,9 @@ public class ItemSelector : MonoBehaviour
         {
             ItemView child = transform.GetChild(i).GetComponent<ItemView>();
             child.Button.onClick.AddListener(() => OnChildClicked(child));
+
+            if (i == 0)
+                SelectedItem = child;
         }
     }
 

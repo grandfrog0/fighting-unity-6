@@ -11,11 +11,11 @@ public class Entity : NetworkBehaviour
     public void TakeDamage(float value)
     {
         currentHealth -= value;
-        Debug.Log(currentHealth);
+        Debugger.Log(currentHealth, IsServer);
 
         if (currentHealth <= 0 && !_isDead)
         {
-            Debug.Log(IsOwner);
+            Debugger.Log(IsOwner, IsServer);
             _isDead = true;
             currentHealth = 0;
             if (IsOwner)

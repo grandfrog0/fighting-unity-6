@@ -26,6 +26,7 @@ public class PlayerController : NetworkBehaviour
 
     public bool isAlive = true;
 
+    [SerializeField] Transform modelParent;
     [SerializeField] GameObject punch;
 
     private void Start()
@@ -129,7 +130,7 @@ public class PlayerController : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
-        Debug.Log("Despawning...");
+        Debugger.Log("Despawning...", IsServer);
         base.OnNetworkDespawn();
     }
 }

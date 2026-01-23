@@ -11,6 +11,7 @@ public class PlayerSpawner : NetworkBehaviour
     public UnityEvent OnDisconnected = new();
     [SerializeField] GameObject playerPrefab;
     private List<ulong> _waitingClients = new();
+    private List<GameObject> _spawnedPlayers = new();
 
     public override void OnNetworkSpawn()
     {
@@ -19,14 +20,15 @@ public class PlayerSpawner : NetworkBehaviour
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
             NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
             _waitingClients.Clear();
-            Debug.Log("NETWORK SPAWN");
+            _spawnedPlayers.Clear();
+            Debugger.Log("NETWORK SPAWN", IsServer);
         }
     }
 
     private void OnClientConnected(ulong clientId)
     {
         _waitingClients.Add(clientId);
-        Debug.Log(_waitingClients.Count);
+        Debugger.Log(_waitingClients.Count, IsServer);
         if (_waitingClients.Count == 2)
         {
             StartGameClientRpc();
@@ -35,16 +37,17 @@ public class PlayerSpawner : NetworkBehaviour
                 Vector3 pos = new Vector3(Random.Range(-2, 2), 2, Random.Range(-2, 2));
                 GameObject player = Instantiate(playerPrefab, pos, Quaternion.identity);
                 player.GetComponent<NetworkObject>().SpawnAsPlayerObject(id);
+                _spawnedPlayers.Add(player);
             }
         }
     }
 
     public void StopGame()
     {
-        Debug.Log(IsOwner);
+        Debugger.Log(IsOwner, IsServer);
         StopGameServerRpc();
 
-        Debug.Log("Pre shutdown");
+        Debugger.Log("Pre shutdown", IsServer);
     }
     [ServerRpc(RequireOwnership = false)]
     public void StopGameServerRpc()
