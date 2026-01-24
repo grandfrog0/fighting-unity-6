@@ -19,7 +19,7 @@ public class GamePreparer : NetworkBehaviour
             playerSelector.SelectedPlayer, talismanSelector.SelectedItem.Item.Name, 
             elixirSelector.SelectedItem.Item.Name, NetworkManager.Singleton.LocalClientId
             );
-        
+
         OnGameReady.Invoke();
     }
 
@@ -32,7 +32,6 @@ public class GamePreparer : NetworkBehaviour
             Talisman = items[itemNames.IndexOf(talismanName)],
             Elixir = items[itemNames.IndexOf(elixirName)]
         };
-        Debugger.Log(playerInfo, IsServer);
 
         playerSpawner.SetPlayerConfig(playerInfo, clientId);
     }

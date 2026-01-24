@@ -45,10 +45,18 @@ public class PlayerController : NetworkBehaviour
         _rigidbody = GetComponent<Rigidbody>();
     }
 
+    [ClientRpc]
+    public void InitClientRpc()
+    {
+        Debug.Log("spawn");
+        _animator = GetComponentInChildren<Animator>();
+        _rigidbody = GetComponent<Rigidbody>();
+    }
+
     private void Update()
     {
-        if (!IsOwner || !isAlive || !_canMove || !_animator) return;
-
+        if (!IsOwner || !isAlive || !_canMove || (_animator == null)) return;
+        
         HandleAttack();
         HandleMove();
     }
@@ -88,13 +96,13 @@ public class PlayerController : NetworkBehaviour
         => SetTriggerClientRpc(key);
     [ClientRpc]
     private void SetIntegerClientRpc(string key, int value)
-        => _animator.SetInteger(key, value);
+        => _animator?.SetInteger(key, value);
     [ClientRpc]
     private void SetBooleanClientRpc(string key, bool value)
-        => _animator.SetBool(key, value);
+        => _animator?.SetBool(key, value);
     [ClientRpc]
     private void SetTriggerClientRpc(string key)
-        => _animator.SetTrigger(key);
+        => _animator?.SetTrigger(key);
 
     [ServerRpc]
     private void RollForwardServerRpc()

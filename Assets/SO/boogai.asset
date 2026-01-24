@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 701634b08b2d6b94b903b889660ac3c6, type: 3}
+  m_Name: boogai
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerConfig
+  Name: Boogai
+  Model: {fileID: 3310356907680605171, guid: 8316527be178c944b9c07b7f4483b32c, type: 3}
+  Health: 30000
+  Damage1: 250
+  Damage2: 500
+  Cooldown1: 1
+  Cooldown2: 1.5
+  StunningProbability: 0.3
+  StunningTimeRange: {x: 3, y: 4}
