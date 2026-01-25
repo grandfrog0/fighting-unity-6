@@ -21,7 +21,6 @@ public class PlayerController : NetworkBehaviour
     private float _hAxis;
     private bool _canMove = true;
 
-    private bool _isCrouching;
     private bool _isRunning;
 
     public bool isAlive = true;
@@ -66,18 +65,19 @@ public class PlayerController : NetworkBehaviour
         _hAxis = Input.GetAxis("Horizontal");
         _vAxis = Input.GetAxis("Vertical");
         _isRunning = Input.GetKey(KeyCode.LeftShift) && _vAxis == 1;
-        _isCrouching = !_isRunning && Input.GetKey(KeyCode.LeftControl);
 
-        Vector3 move = (_isRunning ? 2 : _isCrouching ? 0.5f : 1) * 
+        Vector3 move = (_isRunning ? 2 : 1) * 
             (transform.right * _hAxis + transform.forward * _vAxis).normalized * walkSpeed * 100 * Time.fixedDeltaTime;
-        _rigidbody.linearVelocity = new Vector3(move.x, _rigidbody.linearVelocity.y, move.z);
+        _rigidbody.linearVelocity = Vector3.Lerp(_rigidbody.linearVelocity, new Vector3(move.x, _rigidbody.linearVelocity.y, move.z), 5 * Time.fixedDeltaTime);
 
         float axis = (_isRunning ? 2 : 1) * (_vAxis != 0 ? Mathf.Sign(_vAxis) : _hAxis != 0 ? -1 : 0);
 
         SetIntegerServerRpc("Axis", (int)axis);
-        SetBooleanServerRpc("IsCrouching", _isCrouching);
 
-        bool isRolling = Input.GetButtonDown("Jump");
+        bool isJumping = Input.GetButtonDown("Jump");
+        if (isJumping) JumpServerRpc();
+
+        bool isRolling = Input.GetKeyDown(KeyCode.LeftControl);
         if (isRolling) RollForwardServerRpc();
     }
 
@@ -94,6 +94,9 @@ public class PlayerController : NetworkBehaviour
     [ServerRpc]
     public void SetTriggerServerRpc(string key)
         => SetTriggerClientRpc(key);
+    [ServerRpc]
+    public void JumpServerRpc()
+        => JumpClientRpc();
     [ClientRpc]
     private void SetIntegerClientRpc(string key, int value)
         => _animator?.SetInteger(key, value);
@@ -103,6 +106,9 @@ public class PlayerController : NetworkBehaviour
     [ClientRpc]
     private void SetTriggerClientRpc(string key)
         => _animator?.SetTrigger(key);
+    [ClientRpc]
+    private void JumpClientRpc()
+        => _rigidbody?.AddForce((Vector3.up + transform.forward) * jumpPower, ForceMode.Impulse);
 
     [ServerRpc]
     private void RollForwardServerRpc()
@@ -122,9 +128,15 @@ public class PlayerController : NetworkBehaviour
 
     private void HandleAttack()
     {
-        if (Input.GetKeyDown(KeyCode.E))
+        if (Input.GetMouseButtonDown(0))
         {
-            SetTriggerServerRpc("OnPunch");
+            SetTriggerServerRpc("OnHandKick");
+            Bullet p = Instantiate(punch, transform.position, transform.rotation).GetComponent<Bullet>();
+            p.Init(gameObject, p.transform.forward * 10);
+        }
+        if (Input.GetMouseButtonDown(1))
+        {
+            SetTriggerServerRpc("OnLegKick");
             Bullet p = Instantiate(punch, transform.position, transform.rotation).GetComponent<Bullet>();
             p.Init(gameObject, p.transform.forward * 10);
         }
