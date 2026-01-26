@@ -108,7 +108,10 @@ public class PlayerController : NetworkBehaviour
         => _animator?.SetTrigger(key);
     [ClientRpc]
     private void JumpClientRpc()
-        => _rigidbody?.AddForce((Vector3.up + transform.forward) * jumpPower, ForceMode.Impulse);
+    {
+        _rigidbody?.AddForce((Vector3.up + transform.forward) * jumpPower, ForceMode.Impulse);
+        SetTriggerClientRpc("OnJump");
+    }
 
     [ServerRpc]
     private void RollForwardServerRpc()
